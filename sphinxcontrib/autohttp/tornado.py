@@ -54,7 +54,12 @@ def get_routes(app):
     else:  # unexpected changes
         raise RuntimeError('get_routes cannot find routes')
     for spec in handlers:
-        handler = spec.handler_class
+        if hasattr(spec, 'handler_class'):
+            handler = spec.handler_class
+        elif hasattr(spec, 'target'):
+            handler = spec.target
+        else:  # unexpected changes
+            raise RuntimeError('get_routes cannot find handler_class or target for handler')
         doc_methods = list(handler.SUPPORTED_METHODS)
         if 'HEAD' in doc_methods:
             doc_methods.remove('HEAD')
@@ -65,7 +70,18 @@ def get_routes(app):
             maybe_method = getattr(handler, method.lower(), None)
             if (inspect.isfunction(maybe_method) or
                     inspect.ismethod(maybe_method)):
-                yield method.lower(), spec.regex.pattern, handler
+                if hasattr(spec, 'regex'):
+                    print("Regex for rule found, documenting %s" % spec.regex.pattern)
+                    yield method.lower(), spec.regex.pattern, handler
+                else:
+                    if hasattr(spec, 'matcher'):
+                        matcher = spec.matcher
+                        if hasattr(matcher, 'regex'):
+                            yield method.lower(), matcher.regex.pattern, handler
+                        else:
+                            raise RuntimeError("get_routes no regex for rule in method %s" % method.lower())
+                    else:
+                        raise RuntimeError("get_routes cannot find matcher for rule in method %s" % method.lower())
 
 
 def normalize_path(path):
