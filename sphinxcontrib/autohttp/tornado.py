@@ -71,7 +71,6 @@ def get_routes(app):
             if (inspect.isfunction(maybe_method) or
                     inspect.ismethod(maybe_method)):
                 if hasattr(spec, 'regex'):
-                    print("Regex for rule found, documenting %s" % spec.regex.pattern)
                     yield method.lower(), spec.regex.pattern, handler
                 else:
                     if hasattr(spec, 'matcher'):
